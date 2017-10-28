@@ -64,6 +64,7 @@ type Link interface {
 */
 type FlatParser interface {
 	Parser(c config.Content) FlatEntity
+	GetData(path string) FlatEntity
 }
 
 /**
@@ -90,7 +91,7 @@ type RealEstate struct {
 	FlatEntity
 }
 
-func (olx Olx) Generate() map[int]string  {
+func (olx Olx) Generate() map[int]string {
 	x, err := goquery.ParseUrl(olx.sourceUri)
 
 	links := make(map[int]string)
@@ -167,6 +168,64 @@ func (olx Olx) Parser(c config.Content) FlatEntity {
 	return olx.FlatEntity
 }
 
+func (olx Olx) GetData(path string) FlatEntity  {
+	conf := config.Init(path)
+
+	olx.sourceUri = conf.Link
+	olx.detailHtmlSelector = conf.Selector
+	olx.Fields.Name = conf.Name
+
+	var g Link
+
+	g = olx
+
+	links := g.Generate()
+
+
+	if links != nil {
+		for _, l := range links {
+			olx.Fields.Link = conf.GetLink(l)
+
+			var e FlatParser
+
+			e = olx
+
+			go e.Parser(conf.GetContent())
+		}
+	}
+
+	return olx.FlatEntity
+}
+
+func (realEstate RealEstate) GetData(path string) FlatEntity  {
+	conf := config.Init(path)
+
+	realEstate.sourceUri = conf.Link
+	realEstate.detailHtmlSelector = conf.Selector
+	realEstate.Fields.Name = conf.Name
+
+	var g Link
+
+	g = realEstate
+
+	links := g.Generate()
+
+
+	if links != nil {
+		for _, l := range links {
+			realEstate.Fields.Link = conf.GetLink(l)
+
+			var e FlatParser
+
+			e = realEstate
+
+			go e.Parser(conf.GetContent())
+		}
+	}
+
+	return realEstate.FlatEntity
+}
+
 func (realEstate RealEstate) Parser(c config.Content) FlatEntity  {
 	x, err := goquery.ParseUrl(realEstate.Fields.Link)
 
@@ -192,96 +251,27 @@ func (realEstate RealEstate) Parser(c config.Content) FlatEntity  {
 	return realEstate.FlatEntity
 }
 
-func getOLx()  {
-	conf := config.Init("/home/dante/GoProjects/bin/olx.yaml")
-
-	olx := Olx{}
-	olx.sourceUri = conf.Link
-	olx.detailHtmlSelector = conf.Selector
-
-	var g Link
-
-	g = &olx
-
-	links := g.Generate()
-
-	olx.Fields.Name = conf.Name
-
-	if links != nil {
-		for _, l := range links  {
-			olx.Fields.Link = l
-
-			var e FlatParser
-
-			e = olx
-
-			go e.Parser(conf.GetContent())
-		}
-	}
-}
-//
-//func getRealEstate()  {
-//	conf := config.Init(CONFIG_FIELD_REAL_ESTATE)
-//
-//	realEstate := RealEstate{}
-//	realEstate.sourceUri = conf.Link
-//	realEstate.detailHtmlSelector = conf.Selector
-//
-//	var g Link
-//
-//	g = &realEstate
-//
-//	links := g.Generate()
-//
-//	realEstate.Fields.Name = conf.Name
-//
-//	if links != nil {
-//		for _, l := range links  {
-//			realEstate.Fields.Link = "https://www.real-estate.lviv.ua" + l
-//
-//			var e FlatParser
-//
-//			e = realEstate
-//
-//			go e.Parser(conf.GetContent())
-//		}
-//	}
-//
-//}
-
-func getData(path string, source string) {
-	conf := config.Init(path)
 
 
-	entity := Olx{}
-	entity.sourceUri = conf.Link
-	entity.detailHtmlSelector = conf.Selector
-
-	var g Link
-
-	g = entity
-
-	links := g.Generate()
-
-	entity.Fields.Name = conf.Name
-
-	if links != nil {
-		for _, l := range links {
-			entity.Fields.Link = conf.GetLink(l)
-
-			var e FlatParser
-
-			e = entity
-
-			go e.Parser(conf.GetContent())
-		}
-	}
-}
 
 func main() {
+
 	for k, s := range settings {
-		go getData(s,k)
+		var d FlatParser
+
+		switch k {
+		case "olx":
+			d = Olx{}
+			break
+		case "real-estate":
+			d = RealEstate{}
+			break
+		}
+
+		go d.GetData(s)
 	}
+
+
 
 	//getData(settings[0])
 	//go getOLx()
