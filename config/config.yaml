@@ -1,0 +1,45 @@
+name: 'olx'
+page404:
+  selector: '#offer_active'
+links:
+  page: 'https://www.olx.ua/uk/nedvizhimost/arenda-kvartir/dolgosrochnaya-arenda-kvartir/lvov/'
+  phone: 'https://www.olx.ua/uk/ajax/misc/contact/phone/_ID_/'
+  prefix:
+  selector: '#offers_table a.detailsLink'
+
+#    step_one:
+#        link: https://www.olx.ua/uk/nedvizhimost/arenda-kvartir/dolgosrochnaya-arenda-kvartir/lvov/
+#        phone_link: https://www.olx.ua/uk/ajax/misc/contact/phone/_ID_/
+#        prefix_to_detail: null
+#        parser:
+#            name: detail_link
+#            selector: "#offers_table a.detailsLink"
+#            attr: href
+#    step_two:
+#         parser:
+#             price: 'li.col-sm-6.col-dense-left:nth-child(1)'
+#             rooms: 'li.col-sm-6.col-dense-left:nth-child(2)'
+#             date: 'li.col-sm-6.col-dense-left:last-child'
+#             headline: 'h2.h2-under-main-menu'
+#             district: 'div.row.row-dense > div > div.row.row-dense > div > ol > li:nth-child(2)'
+#    real_state:
+#         not_found:
+#             parser:
+#                 selector: '.row.row-dense'
+#         step_one:
+#             link: https://www.real-estate.lviv.ua/orenda-kvartira/Lviv#orderby_dateins
+#             phone_link: https://www.real-estate.lviv.ua/ajax_show_phone_object/_ID_
+#             prefix_to_detail: https://www.real-estate.lviv.ua
+#             post:
+#                data: 'hash=%23orderby_dateins'
+#             parser:
+#                 name: detail_link
+#                 selector: '#search_result a.object-address'
+#                 attr: href
+#         step_two:
+#             parser:
+#                 price: 'li.col-sm-6.col-dense-left:nth-child(1)'
+#                 rooms: 'li.col-sm-6.col-dense-left:nth-child(2)'
+#                 date: 'li.col-sm-6.col-dense-left:last-child'
+#                 headline: 'h2.h2-under-main-menu'
+#                 district: 'div.row.row-dense > div > div.row.row-dense > div > ol > li:nth-child(2)'
