@@ -64,7 +64,7 @@ type Link interface {
 */
 type FlatParser interface {
 	Parser(c config.Content) FlatEntity
-	GetData(path string) FlatEntity
+	GetData(conf *config.Config) FlatEntity
 }
 
 /**
@@ -168,13 +168,7 @@ func (olx Olx) Parser(c config.Content) FlatEntity {
 	return olx.FlatEntity
 }
 
-func (olx Olx) GetData(path string) FlatEntity  {
-	conf := config.Init(path)
-
-	olx.sourceUri = conf.Link
-	olx.detailHtmlSelector = conf.Selector
-	olx.Fields.Name = conf.Name
-
+func (olx Olx) GetData(conf *config.Config) FlatEntity  {
 	var g Link
 
 	g = olx
@@ -197,19 +191,12 @@ func (olx Olx) GetData(path string) FlatEntity  {
 	return olx.FlatEntity
 }
 
-func (realEstate RealEstate) GetData(path string) FlatEntity  {
-	conf := config.Init(path)
-
-	realEstate.sourceUri = conf.Link
-	realEstate.detailHtmlSelector = conf.Selector
-	realEstate.Fields.Name = conf.Name
-
+func (realEstate RealEstate) GetData(conf *config.Config) FlatEntity  {
 	var g Link
 
 	g = realEstate
 
 	links := g.Generate()
-
 
 	if links != nil {
 		for _, l := range links {
@@ -258,24 +245,34 @@ func main() {
 
 	for k, s := range settings {
 		var d FlatParser
+		conf := config.Init(s)
 
 		switch k {
 		case "olx":
-			d = Olx{}
+			olx := Olx{}
+
+			olx.sourceUri = conf.Link
+			olx.detailHtmlSelector = conf.Selector
+			olx.Fields.Name = conf.Name
+
+			d = olx
+
 			break
 		case "real-estate":
-			d = RealEstate{}
+			re := RealEstate{}
+
+			re.sourceUri = conf.Link
+			re.detailHtmlSelector = conf.Selector
+			re.Fields.Name = conf.Name
+
+			d = re
+
 			break
 		}
 
-		go d.GetData(s)
+		go d.GetData(&conf)
 	}
 
-
-
-	//getData(settings[0])
-	//go getOLx()
-	//go getRealEstate()
 
 	var input string
 	fmt.Scanln(&input)
