@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"net/url"
-	"bytes"
-	"net/http"
-	"io/ioutil"
 	"regexp"
+	"parser/linkGenerator"
 )
 
 var (
@@ -53,13 +50,6 @@ type FlatEntity struct {
 }
 
 /**
-* General interface that describe logic for getting links on detail page of flat
-*/
-type Link interface {
-	Generate() map[int]string
-}
-
-/**
 * Interface that describe logic for parsing main data of flat
 */
 type FlatParser interface {
@@ -68,18 +58,10 @@ type FlatParser interface {
 }
 
 /**
-* Options for getting detail links from some source
-*/
-type source struct {
-	sourceUri string
-	detailHtmlSelector string
-}
-
-/**
 * Entity OLX https://www.olx.ua/
 */
 type Olx struct {
-	source
+	links linkGenerator.GetMethod
 	FlatEntity
 }
 
@@ -87,59 +69,9 @@ type Olx struct {
 * Entity RealEstate https://www.real-estate.lviv.ua/
 */
 type RealEstate struct {
-	source
+	links linkGenerator.PostMethod
 	FlatEntity
 }
-
-func (olx Olx) Generate() map[int]string {
-	x, err := goquery.ParseUrl(olx.sourceUri)
-
-	links := make(map[int]string)
-
-	if err == nil {
-		for i, v := range x.Find(olx.detailHtmlSelector).Attrs("href") {
-			links[i] = v
-		}
-	}
-
-	return links
-}
-
-func (realEstate RealEstate) Generate() map[int]string  {
-	requestUrl := realEstate.sourceUri
-
-	form := url.Values{
-		"hash": {requestUrl},
-	}
-
-	body := bytes.NewBufferString(form.Encode())
-
-	rsp, err := http.Post(requestUrl, "application/x-www-form-urlencoded", body)
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer rsp.Body.Close()
-
-	bodyByte, err := ioutil.ReadAll(rsp.Body)
-
-	if err != nil {
-		panic(err)
-	}
-
-	x, err := goquery.ParseString(string(bodyByte))
-	links := make(map[int]string)
-
-	if err == nil {
-		for i, v := range x.Find(realEstate.detailHtmlSelector).Attrs("href") {
-			links[i] = v
-		}
-	}
-
-	return links
-}
-
 
 func (olx Olx) Parser(c config.Content) FlatEntity {
 	x, err := goquery.ParseUrl(olx.Fields.Link)
@@ -169,9 +101,9 @@ func (olx Olx) Parser(c config.Content) FlatEntity {
 }
 
 func (olx Olx) GetData(conf *config.Config) FlatEntity  {
-	var g Link
+	var g linkGenerator.Link
 
-	g = olx
+	g = &olx.links
 
 	links := g.Generate()
 
@@ -192,9 +124,9 @@ func (olx Olx) GetData(conf *config.Config) FlatEntity  {
 }
 
 func (realEstate RealEstate) GetData(conf *config.Config) FlatEntity  {
-	var g Link
+	var g linkGenerator.Link
 
-	g = realEstate
+	g = &realEstate.links
 
 	links := g.Generate()
 
@@ -238,9 +170,6 @@ func (realEstate RealEstate) Parser(c config.Content) FlatEntity  {
 	return realEstate.FlatEntity
 }
 
-
-
-
 func main() {
 
 	for k, s := range settings {
@@ -251,8 +180,8 @@ func main() {
 		case "olx":
 			olx := Olx{}
 
-			olx.sourceUri = conf.Link
-			olx.detailHtmlSelector = conf.Selector
+			olx.links.Link = conf.Link
+			olx.links.Selector = conf.Selector
 			olx.Fields.Name = conf.Name
 
 			d = olx
@@ -261,8 +190,8 @@ func main() {
 		case "real-estate":
 			re := RealEstate{}
 
-			re.sourceUri = conf.Link
-			re.detailHtmlSelector = conf.Selector
+			re.links.Link = conf.Link
+			re.links.Selector = conf.Selector
 			re.Fields.Name = conf.Name
 
 			d = re
