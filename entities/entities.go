@@ -1,9 +1,8 @@
 package entities
 
-type FlatParser interface {
-	Parser() FlatEntity
-}
+import "parser/config"
 
+//Fields for describe flay entity
 type Flat struct {
 	Name string
 	Link string
@@ -14,16 +13,16 @@ type Flat struct {
 	District string
 }
 
-type selectors struct {
-	Price string
-	Rooms string
-	Date string
-	Headline string
-	District string
+//Interface that describe logic for parsing main data of flat
+type FlatParser interface {
+	Parser(c config.Content) FlatEntity
+	GetData(conf *config.Config) FlatEntity
 }
 
+
+
+//Main structure that content all data for working with flat entity
 type FlatEntity struct {
 	Fields Flat
-	HtmlTags selectors
 }
 
